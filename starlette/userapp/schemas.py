@@ -17,6 +17,7 @@ from userapp.mutations import (
 type_defs = gql(
     """
     type User {
+        id: Int!
         first_name: String
         last_name: String
         email: String
@@ -36,11 +37,10 @@ type_defs = gql(
 
 
     input UserInput {
-  id: Int!
-  first_name: String
-  last_name: String
-  email: String
-  password: String
+        first_name: String
+        last_name: String
+        email: String
+        password: String
 }
 
     input LoginInput {

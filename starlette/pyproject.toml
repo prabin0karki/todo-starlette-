@@ -18,6 +18,7 @@ psycopg2 = "^2.8.6"
 asyncpg = "^0.21.0"
 pre-commit = "^2.9.3"
 passlib = "^1.7.4"
+PyJWT = "^2.0.0"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.6.0"

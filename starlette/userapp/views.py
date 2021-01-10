@@ -1,13 +1,24 @@
 import base64
 import pdb
+import jwt
 import hashlib, binascii, os
 from userapp.models import users
 from database import database
 
-
+from starlette.config import Config
 from passlib.context import CryptContext
+from datetime import datetime, timedelta
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+config = Config(".env")
+
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+
+def verify_password(plain_password, hashed_password) -> str:
+    return pwd_context.verify(plain_password, hashed_password)
 
 
 def authentication_required(resolver):
@@ -21,25 +32,6 @@ def authentication_required(resolver):
         return result
 
     return wrapper_func
-
-
-def hash_password(password):
-    salt = hashlib.sha256(os.urandom(60)).hexdigest().encode("ascii")
-
-    pwdhash = hashlib.pbkdf2_hmac("sha512", password.encode("utf-8"), salt, 100000)
-    pwdhash = binascii.hexlify(pwdhash)
-    return (salt + pwdhash).decode("ascii")
-
-
-def verify_password(stored_password, provided_password):
-    salt = stored_password[:64]
-    stored_password = stored_password[64:]
-
-    pwdhash = hashlib.pbkdf2_hmac(
-        "sha512", provided_password.encode("utf-8"), salt.encode("ascii"), 100000
-    )
-    pwdhash = binascii.hexlify(pwdhash).decode("ascii")
-    return pwdhash == stored_password
 
 
 async def get_user(email):
@@ -62,15 +54,18 @@ async def authenticate_user(email, password):
             return None
 
         # pdb.set_trace()
-        if verify_password(user.get("password", None), password):
-            return gen_token(email, password)
+        if verify_password(password, user.get("password", None)):
+            return create_access_token(email, password)
     except Exception as er:
         pass
     return None
 
 
-def gen_token(email, password):
-    token = base64.b64encode(bytes(f"{email}:{password}", encoding="ascii")).decode(
-        "ascii"
+def create_access_token(email, password):
+    expire = datetime.utcnow() + timedelta(minutes=15)
+    encoded_jwt = jwt.encode(
+        {"email": email, "password": password, "exp": expire},
+        config("SECRET_KEY"),
+        algorithm=config("ALGORITHM"),
     )
-    return token
+    return encoded_jwt

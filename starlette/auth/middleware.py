@@ -10,9 +10,12 @@ from starlette.authentication import (
 
 
 class AuthenticatedUser(BaseUser):
-    def __init__(self, id, username):
-        self.id = id
-        self.username = username
+    def __init__(self, email):
+        self.email = email
+
+    # def __init__(self, id, email):
+    #     self.id = id
+    #     self.email = email
 
     @property
     def is_authenticated(self):
@@ -20,7 +23,7 @@ class AuthenticatedUser(BaseUser):
 
     @property
     def display_name(self) -> str:
-        return self.username
+        return self.email
 
 
 class BasicAuthBackend(AuthenticationBackend):
@@ -38,9 +41,11 @@ class BasicAuthBackend(AuthenticationBackend):
         except (ValueError, UnicodeDecodeError, binascii.Error) as exc:
             raise AuthenticationError("Invalid basic auth credentials")
 
-        username, _, password = decoded.partition(":")
+        email, _, password = decoded.partition(":")
+        print("==================")
+        user = AuthenticatedUser(email)
 
-        verified_user = authenticaticate_user(username, password)
-        if verified_user:
-            user = AuthenticatedUser(verified_user.id, verified_user.username)
+        # verified_user = authenticaticate_user(email, password)
+        # if verified_user:
+        # user = AuthenticatedUser(verified_user.id, verified_user.email)
         return AuthCredentials(["authenticated"]), user
